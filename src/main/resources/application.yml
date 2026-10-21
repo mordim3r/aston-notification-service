@@ -1,11 +1,24 @@
 server:
-  port: 8081          # чтобы не конфликтовать с REST-приложением (у него по умолчанию 8080)
+  port: 8081
 
 spring:
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
       group-id: user-events-group
-      auto-offset-reset: earliest      # при первом запуске читать всё с начала топика
+      auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+  # Блок mail должен быть на одном уровне с kafka!
+  mail:
+    host: localhost
+    port: 1025
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+
+# Блок notification должен быть вообще без отступов слева (на одном уровне с spring)
+notification:
+  mail:
+    from: test_mail@aston.local
