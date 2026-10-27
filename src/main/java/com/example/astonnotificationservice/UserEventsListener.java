@@ -14,10 +14,12 @@ public class UserEventsListener {
 
     private final ObjectMapper objectMapper;
     private final EmailService emailService;
+    private final UserEventValidator validator;
 
-    public UserEventsListener(ObjectMapper objectMapper, EmailService emailService) {
+    public UserEventsListener(ObjectMapper objectMapper, EmailService emailService, UserEventValidator validator) {
         this.objectMapper = objectMapper;
         this.emailService = emailService;
+        this.validator = validator;
     }
 
     @KafkaListener(topics = "user-events", groupId = "user-events-group")
@@ -25,17 +27,14 @@ public class UserEventsListener {
         try {
             JsonNode node = objectMapper.readTree(message);
 
-            String text = node.path("type").asText(null);
-            if (text == null || text.isBlank()) {
+            if (!validator.hasType(node)) {
                 log.warn("В событии отсутствует поле 'type': {}", message);
                 return;
             }
-            String email = node.path("email").asText(null);
-            if (email == null && node.hasNonNull("user")) {
-                email = node.path("user").path("email").asText(null);
-            }
+            String text = node.path("type").asText();
 
-            if (email == null || email.isBlank()) {
+            String email = validator.findEmail(node);
+            if (email == null) {
                 log.warn("Email не найден в событии: {}", message);
                 return;
             }
